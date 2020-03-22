@@ -1,10 +1,10 @@
 /* ------------------------------------------------------------
- * File:	csim.cc
+ * File:    csim.cc
  * Description:	generic cloud simulator
- *		See README
+ *  See README
  * Supported Connectors:
- *      amazon
- *      atmos
+ *  amazon
+ *  atmos
  *
  * The Rewrite rule tab-delimits the fields and is required for
  * the HTML GET method to call our script.
@@ -23,8 +23,8 @@
 
 
 /* ------------------------------------------------------------
- * Function:	simLog
- * Description:	Write to syslog
+ * Function:    simLog
+ * Description: Write to syslog
  * ------------------------------------------------------------ */
 void simLog(int priority, const char *format, ...)
 {
@@ -35,8 +35,8 @@ void simLog(int priority, const char *format, ...)
 
 
 /* ------------------------------------------------------------
- * Function:	getTime
- * Description:	Get high res time from microboottime
+ * Function:    getTime
+ * Description: Get high res time from microboottime
  * ------------------------------------------------------------ */
 double getTime (void)
 {
@@ -51,9 +51,9 @@ double getTime (void)
 
 
 /* ------------------------------------------------------------
- * Function:	getDigest
- * Desription:	Use the same call the connector makes to generate
- *		the digest.
+ * Function:    getDigest
+ * Desription:  Use the same call the connector makes to generate
+ *  the digest.
  * ------------------------------------------------------------ */
 void getDigest (char *pathname, char *digest, bool useSSL)
 {
@@ -70,13 +70,15 @@ void getDigest (char *pathname, char *digest, bool useSSL)
         sprintf (cmd, "/usr/bin/md5sum %s", pathname);
 
     if (NULL != (pin = popen (cmd, "r"))) {
-    	while (1) {
-    		fgets (buffer, 1024, pin);
-    		if (feof (pin)) 
+        while (1) {
+        fgets (buffer, 1024, pin);
+            if (feof (pin)) 
                 break;
-    		if (NULL != (ptr = strchr (buffer, 0x0d))) 
+
+            if (NULL != (ptr = strchr (buffer, 0x0d))) 
                 *ptr = 0;
-    		if (NULL != (ptr = strchr (buffer, 0x0a))) 
+
+            if (NULL != (ptr = strchr (buffer, 0x0a))) 
                 *ptr = 0;
 
             if (useSSL) {
@@ -84,23 +86,22 @@ void getDigest (char *pathname, char *digest, bool useSSL)
                     strcpy (digest, ptr + 3);
                     break;
                 }
+            } else if (NULL != strstr (buffer, pathname)) {
+                if (NULL != (ptr = strchr (buffer, ' '))) {
+                    *ptr = 0;
+                    strcpy (digest, buffer);
+                    break;
+                }
             }
-            else if (NULL != strstr (buffer, pathname)) {
-    		    if (NULL != (ptr = strchr (buffer, ' '))) {
-    		    	*ptr = 0;
-    		    	strcpy (digest, buffer);
-    		    	break;
-			   	}
-		    }
-		} // while
-	    pclose (pin);
-	}
+        } // while
+        pclose (pin);
+    }
 }
 
 
 /* ------------------------------------------------------------
- * Function:	createPath
- * Description:	Create/check for each component of the path
+ * Function:    createPath
+ * Description: Create/check for each component of the path
  *              Path will always have a leading /var/www
  * ------------------------------------------------------------ */
 void createPath (char *directory)
@@ -113,33 +114,33 @@ void createPath (char *directory)
 
     // We're given the entire path, strip the last component off
     if (NULL != (ptr = strrchr (base, '/')))
-	*ptr = 0;
+        *ptr = 0;
 
     ptr = strchr (base + 1, '/');
     while (true) {
-    	strcpy (work, base);
-    	work[ptr-base] = 0;
-    	if (access (work, 0)) {
-    		if (0 != (mkdir (work, 0777)))
-    			simLog (LOG_ERR, "Path: %s, Error: Cannot Create Directory (err: %d)\n",
-                    work, errno);
-		}
-	   
+        strcpy (work, base);
+        work[ptr-base] = 0;
+        if (access (work, 0)) {
+            if (0 != (mkdir (work, 0777)))
+                simLog (LOG_ERR, "Path: %s, Error: Cannot Create Directory (err: %d)\n",
+                work, errno);
+        }
+
         if (NULL == (ptr = strchr (ptr + 1, '/'))) {
-		    // create the last component
-		    if (access (base, 0)) {
-		    	if (0 != (mkdir (base, 0777)))
-				    simLog (LOG_ERR, "Path: %s, Error: Cannot Create Directory (err: %d)\n",
+            // create the last component
+            if (access (base, 0)) {
+                if (0 != (mkdir (base, 0777)))
+                    simLog (LOG_ERR, "Path: %s, Error: Cannot Create Directory (err: %d)\n",
                         work, errno);
-			}
-		    break;
-		}
-	}
+            }
+            break;
+        }
+    }
 }
 
 
 /* ------------------------------------------------------------
- * Function:	main
+ * Function:    main
  * ------------------------------------------------------------ */
 int main (int argc, char **argv, char **envp)
 {
@@ -178,7 +179,7 @@ int main (int argc, char **argv, char **envp)
 
     // Find Query String
     for (int x = 0; ; x++) {
-	    if (NULL == envp[x])
+        if (NULL == envp[x])
             break;
         simLog(LOG_INFO, "envp[%d]: %s", x, envp[x]);
     }
@@ -188,28 +189,27 @@ int main (int argc, char **argv, char **envp)
     // ------------------------------------------------------------
     if (0 == strcasecmp (requestMethod, "DELETE")) {
 #ifdef DEBUG
-    	simLog (LOG_INFO, "%s DELETE Entered: RequestUri: %s\n", host, requestUri);
+        simLog (LOG_INFO, "%s DELETE Entered: RequestUri: %s\n", host, requestUri);
 #endif
 
-	    if (!access (pathname, 0)) {
-	    	unlink (pathname);
-	    	fprintf (stdout, "Status: 204 No Content\n");		// Script needs this
-	    }
-	    else {
-	    	fprintf (stdout, "Status: 404 File not found\n");
-	    }
+        if (!access (pathname, 0)) {
+            unlink (pathname);
+            fprintf (stdout, "Status: 204 No Content\n");       // Script needs this
+        } else {
+            fprintf (stdout, "Status: 404 File not found\n");
+        }
 
-	    fprintf (stdout, "Content-Type: text/plain\n");
-	    fprintf (stdout, "Content-Length: 0\n");
-	    fprintf (stdout, "\n");
-	} // DELETE
+        fprintf (stdout, "Content-Type: text/plain\n");
+        fprintf (stdout, "Content-Length: 0\n");
+        fprintf (stdout, "\n");
+    } // DELETE
 
     // ------------------------------------------------------------
     // HTTP GET - retrieve the object
     // ------------------------------------------------------------
     else if (0 == strcasecmp (requestMethod, "GET")) {
 #ifdef DEBUG
-    	simLog (LOG_INFO, "%s GET Entered: RequestUri: %s\n", host, pathname);
+        simLog (LOG_INFO, "%s GET Entered: RequestUri: %s\n", host, pathname);
 #endif
         if (!*pathname)
             return 0;
@@ -254,7 +254,7 @@ int main (int argc, char **argv, char **envp)
                     totalSize += count;
                 }
                 else {
-                    break;			// Short read, just bail
+                    break;  // Short read, just bail
                 }
 
                 if (feof (fin))
@@ -266,14 +266,14 @@ int main (int argc, char **argv, char **envp)
 #endif
             fclose (fin);
         } // fopen
-        else {		// open failed
+        else {  // open failed
             fprintf (stdout, "Status: 404 File cannot be opened for reading\n");
             fprintf (stdout, "Content-Type: text/plain\n");
             fprintf (stdout, "Content-Length: 0\n");
             fprintf (stdout, "Connection: close\n");
             fprintf (stdout, "\n");
         }
-	} // GET
+    } // GET
 
     // ------------------------------------------------------------
     // HTTP PUT/POST - create the object
@@ -281,56 +281,54 @@ int main (int argc, char **argv, char **envp)
     else if (0 == strcasecmp (requestMethod, "PUT") ||
              0 == strcasecmp (requestMethod, "POST")) {
 #ifdef DEBUG
-    	simLog (LOG_INFO, "%s %s Entered: RequestUri: %s\n", 
+        simLog (LOG_INFO, "%s %s Entered: RequestUri: %s\n", 
                 host, requestMethod, pathname);
 #endif
 
-	    totalSize = 0;
-	    if (*pathname) {
-	    	createPath (pathname);
-	    	if (NULL != (fout = fopen (pathname, "wb"))) {
-	    		while (true) {
-	    			count = fread (buffer, 1, 65535, stdin);
+        totalSize = 0;
+        if (*pathname) {
+            createPath (pathname);
+            if (NULL != (fout = fopen (pathname, "wb"))) {
+                while (true) {
+                    count = fread (buffer, 1, 65535, stdin);
 
                     /* remove for verbose buff logging
                     for (int i = 0; i < count; i++)
                         simLog(LOG_INFO, "buff[i]: %x", buffer[i]);
                     */
-	    			if (count > 0)
-	    				fwrite (buffer, 1, count, fout);
-				    else 
-                        break;		// short read, just bail
+                    if (count > 0)
+                        fwrite (buffer, 1, count, fout);
+                    else 
+                        break;  // short read, just bail
 
-				    totalSize += count;
-				    if (feof (stdin)) 
+                    totalSize += count;
+                    if (feof (stdin)) 
                         break;
-				}
-			    fflush (fout);
-			    fclose (fout);
-			}
-		}
-	    else {
+                }
+                fflush (fout);
+                fclose (fout);
+            }
+        } else {
             totalSize = -1;
         }
 
-	    getDigest (pathname, digest, uid ? true : false);
+        getDigest (pathname, digest, uid ? true : false);
 #ifdef DEBUG
-	    simLog (LOG_INFO, "%s %s: %s (%s) len:%ld\n", 
+        simLog (LOG_INFO, "%s %s: %s (%s) len:%ld\n", 
                 host, requestMethod, pathname, digest, totalSize);
 #endif
         
         // Atmos will set UID
         if (uid) {
-	        fprintf (stdout, "Status: 201 Created\n");		// the connector script needs this
+            fprintf (stdout, "Status: 201 Created\n");   // the connector script needs this
             fprintf (stdout, "location: %s\n", pathname + 13);
+        } else {
+            fprintf (stdout, "Status: 200 OK\n");       // the connector script needs this
         }
-        else {
-	        fprintf (stdout, "Status: 200 OK\n");		// the connector script needs this
-        }
-	    etime = getTime ();
-	    fprintf (stdout, "Content-Length: 0\n");
-	    fprintf (stdout, "Connection: close\n");
-	    fprintf (stdout, "Content-Type: text/plain; charset=UTF-8\n");
+        etime = getTime ();
+        fprintf (stdout, "Content-Length: 0\n");
+        fprintf (stdout, "Connection: close\n");
+        fprintf (stdout, "Content-Type: text/plain; charset=UTF-8\n");
         if (uid) {
             fprintf (stdout, "x-emc-delta: %.0f\n", etime - stime);
             fprintf (stdout, "x-emc-policy: default\n");
@@ -339,11 +337,10 @@ int main (int argc, char **argv, char **envp)
                 getDigest (pathname, digest, uid ? true : false);
                 fprintf (stdout, "x-emc-wschecksum: sha0/0/%s\n", digest);
             }
+        } else {
+            fprintf (stdout, "ETag: \"%s\"\n", digest);
         }
-        else {
-	        fprintf (stdout, "ETag: \"%s\"\n", digest);
-        }
-	    fprintf (stdout, "\n");
-	} // PUT/POST
+        fprintf (stdout, "\n");
+    } // PUT/POST
 } // main
 
